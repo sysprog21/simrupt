@@ -38,7 +38,7 @@ static struct class *simrupt_class;
 static struct cdev simrupt_cdev;
 
 /* Data are stored into a kfifo buffer before passing them to the userspace */
-static struct kfifo rx_fifo;
+static DECLARE_KFIFO_PTR(rx_fifo, unsigned char);
 
 /* NOTE: the usage of kfifo is safe (no need for extra locking), until there is
  * only one concurrent reader and one concurrent writer. Writes are serialized
