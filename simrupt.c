@@ -282,19 +282,27 @@ static ssize_t simrupt_read(struct file *file,
     return ret ? ret : read;
 }
 
+static atomic_t open_cnt;
+
 static int simrupt_open(struct inode *inode, struct file *filp)
 {
     pr_debug("simrupt: %s\n", __func__);
-    mod_timer(&timer, jiffies + msecs_to_jiffies(delay));
+    if (atomic_inc_return(&open_cnt) == 1)
+        mod_timer(&timer, jiffies + msecs_to_jiffies(delay));
+    pr_info("openm current cnt: %d\n", atomic_read(&open_cnt));
+
     return 0;
 }
 
 static int simrupt_release(struct inode *inode, struct file *filp)
 {
     pr_debug("simrupt: %s\n", __func__);
-    del_timer_sync(&timer);
-    flush_workqueue(simrupt_workqueue);
-    fast_buf_clear();
+    if (atomic_dec_and_test(&open_cnt) == 0) {
+        del_timer_sync(&timer);
+        flush_workqueue(simrupt_workqueue);
+        fast_buf_clear();
+    }
+    pr_info("release, current cnt: %d\n", atomic_read(&open_cnt));
 
     return 0;
 }
@@ -361,6 +369,7 @@ static int __init simrupt_init(void)
 
     /* Setup the timer */
     timer_setup(&timer, timer_handler, 0);
+    atomic_set(&open_cnt, 0);
 
     pr_info("simrupt: registered new simrupt device: %d,%d\n", major, 0);
 out:
