@@ -7,6 +7,7 @@
 #include <linux/kfifo.h>
 #include <linux/module.h>
 #include <linux/slab.h>
+#include <linux/version.h>
 #include <linux/workqueue.h>
 
 MODULE_LICENSE("Dual MIT/GPL");
@@ -338,7 +339,11 @@ static int __init simrupt_init(void)
     }
 
     /* Create a class structure */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
     simrupt_class = class_create(THIS_MODULE, DEV_NAME);
+#else
+    simrupt_class = class_create(DEV_NAME);
+#endif
     if (IS_ERR(simrupt_class)) {
         printk(KERN_ERR "error creating simrupt class\n");
         ret = PTR_ERR(simrupt_class);
