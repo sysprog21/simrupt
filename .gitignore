@@ -1,7 +1,9 @@
-.*.ko.cmd
-.*.o.cmd
-*.symvers
-*.order
 *.o
 *.ko
+*.mod
 *.mod.c
+*.mod.o
+*.order
+*.cmd
+*.symvers
+user
