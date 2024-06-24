@@ -290,7 +290,7 @@ static int simrupt_open(struct inode *inode, struct file *filp)
     pr_debug("simrupt: %s\n", __func__);
     if (atomic_inc_return(&open_cnt) == 1)
         mod_timer(&timer, jiffies + msecs_to_jiffies(delay));
-    pr_info("openm current cnt: %d\n", atomic_read(&open_cnt));
+    pr_info("open current cnt: %d\n", atomic_read(&open_cnt));
 
     return 0;
 }
