@@ -298,7 +298,7 @@ static int simrupt_open(struct inode *inode, struct file *filp)
 static int simrupt_release(struct inode *inode, struct file *filp)
 {
     pr_debug("simrupt: %s\n", __func__);
-    if (atomic_dec_and_test(&open_cnt) == 0) {
+    if (atomic_dec_and_test(&open_cnt)) {
         del_timer_sync(&timer);
         flush_workqueue(simrupt_workqueue);
         fast_buf_clear();
