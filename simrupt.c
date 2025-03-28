@@ -214,7 +214,9 @@ static void process_data(void)
     WARN_ON_ONCE(!irqs_disabled());
 
     pr_info("simrupt: [CPU#%d] produce data\n", smp_processor_id());
-    fast_buf_put(update_simrupt_data());
+    int ret = fast_buf_put(update_simrupt_data());
+    if (unlikely(ret < 0) && printk_ratelimit())
+        pr_warn("simrupt: fast_buf is full, dropping data\n");
 
     pr_info("simrupt: [CPU#%d] scheduling tasklet\n", smp_processor_id());
     tasklet_schedule(&simrupt_tasklet);
