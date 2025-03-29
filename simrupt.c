@@ -9,6 +9,9 @@
 #include <linux/slab.h>
 #include <linux/version.h>
 #include <linux/workqueue.h>
+#if defined(CONFIG_X86)
+#include <linux/vmalloc.h>
+#endif
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("National Cheng Kung University, Taiwan");
