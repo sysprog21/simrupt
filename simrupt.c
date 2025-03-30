@@ -324,6 +324,7 @@ static const struct file_operations simrupt_fops = {
 static int __init simrupt_init(void)
 {
     dev_t dev_id;
+    struct device *device;
     int ret;
 
     if (kfifo_alloc(&rx_fifo, PAGE_SIZE, GFP_KERNEL) < 0)
@@ -356,25 +357,26 @@ static int __init simrupt_init(void)
     }
 
     /* Register the device with sysfs */
-    device_create(simrupt_class, NULL, MKDEV(major, 0), NULL, DEV_NAME);
+    device = device_create(simrupt_class, NULL, dev_id, NULL, DEV_NAME);
+    if (IS_ERR(device)) {
+        printk(KERN_ERR "Failed to create device.\n");
+        ret = PTR_ERR(device);
+        goto error_device;
+    }
 
     /* Allocate fast circular buffer */
     fast_buf.buf = vmalloc(PAGE_SIZE);
     if (!fast_buf.buf) {
-        device_destroy(simrupt_class, dev_id);
-        class_destroy(simrupt_class);
         ret = -ENOMEM;
-        goto error_cdev;
+        goto error_vmalloc;
     }
 
     /* Create the workqueue */
     simrupt_workqueue = alloc_workqueue("simruptd", WQ_UNBOUND, WQ_MAX_ACTIVE);
     if (!simrupt_workqueue) {
         vfree(fast_buf.buf);
-        device_destroy(simrupt_class, dev_id);
-        class_destroy(simrupt_class);
         ret = -ENOMEM;
-        goto error_cdev;
+        goto error_workqueue;
     }
 
     /* Setup the timer */
@@ -384,6 +386,12 @@ static int __init simrupt_init(void)
     pr_info("simrupt: registered new simrupt device: %d,%d\n", major, 0);
 out:
     return ret;
+error_workqueue:
+    vfree(fast_buf.buf);
+error_vmalloc:
+    device_destroy(simrupt_class, dev_id);
+error_device:
+    class_destroy(simrupt_class);
 error_cdev:
     cdev_del(&simrupt_cdev);
 error_region:
