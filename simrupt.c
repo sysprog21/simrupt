@@ -61,10 +61,19 @@ static inline int update_simrupt_data(void)
 /* Insert a value into the kfifo buffer */
 static void produce_data(unsigned char val)
 {
-    /* Implement a kind of circular FIFO here (skip oldest element if kfifo
-     * buffer is full).
+    /* Implement overwrite-on-full FIFO behavior:
+     * If the kfifo buffer is full, remove the oldest element
+     * before inserting the new one.
      */
-    unsigned int len = kfifo_in(&rx_fifo, &val, sizeof(val));
+    unsigned int len;
+    if (kfifo_avail(&rx_fifo) < sizeof(val)) {
+        unsigned char dummy;
+        len = kfifo_out(&rx_fifo, &dummy, sizeof(dummy));
+        if (len != sizeof(dummy))
+            pr_warn("Failed to remove the oldest element (%u bytes)\n", len);
+    }
+
+    len = kfifo_in(&rx_fifo, &val, sizeof(val));
     if (unlikely(len < sizeof(val)) && printk_ratelimit())
         pr_warn("%s: %zu bytes dropped\n", __func__, sizeof(val) - len);
 
