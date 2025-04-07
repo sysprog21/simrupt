@@ -66,7 +66,7 @@ static void produce_data(unsigned char val)
      * before inserting the new one.
      */
     unsigned int len;
-    if (kfifo_avail(&rx_fifo) < sizeof(val)) {
+    if (kfifo_is_full(&rx_fifo)) {
         unsigned char dummy;
         len = kfifo_out(&rx_fifo, &dummy, sizeof(dummy));
         if (len != sizeof(dummy))
