@@ -69,13 +69,14 @@ static void produce_data(unsigned char val)
     if (kfifo_is_full(&rx_fifo)) {
         unsigned char dummy;
         len = kfifo_out(&rx_fifo, &dummy, sizeof(dummy));
-        if (len != sizeof(dummy))
-            pr_warn("Failed to remove the oldest element (%u bytes)\n", len);
+        if (unlikely(len != sizeof(dummy)))
+            pr_warn_ratelimited(
+                "Failed to remove the oldest element (%u bytes)\n", len);
     }
-
     len = kfifo_in(&rx_fifo, &val, sizeof(val));
-    if (unlikely(len < sizeof(val)) && printk_ratelimit())
-        pr_warn("%s: %zu bytes dropped\n", __func__, sizeof(val) - len);
+    if (unlikely(len < sizeof(val)))
+        pr_warn_ratelimited("%s: %zu bytes dropped\n", __func__,
+                            sizeof(val) - len);
 
     pr_debug("simrupt: %s: in %u/%u bytes\n", __func__, len,
              kfifo_len(&rx_fifo));
@@ -225,8 +226,8 @@ static void process_data(void)
 
     pr_info("simrupt: [CPU#%d] produce data\n", smp_processor_id());
     int ret = fast_buf_put(update_simrupt_data());
-    if (unlikely(ret < 0) && printk_ratelimit())
-        pr_warn("simrupt: fast_buf is full, dropping data\n");
+    if (unlikely(ret < 0))
+        pr_warn_ratelimited("simrupt: fast_buf is full, dropping data\n");
 
     pr_info("simrupt: [CPU#%d] scheduling tasklet\n", smp_processor_id());
     tasklet_schedule(&simrupt_tasklet);
