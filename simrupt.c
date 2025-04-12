@@ -322,11 +322,13 @@ static int simrupt_release(struct inode *inode, struct file *filp)
 }
 
 static const struct file_operations simrupt_fops = {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
+    .owner = THIS_MODULE,
+#endif
     .read = simrupt_read,
     .llseek = no_llseek,
     .open = simrupt_open,
     .release = simrupt_release,
-    .owner = THIS_MODULE,
 };
 
 static int __init simrupt_init(void)
