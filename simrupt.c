@@ -382,7 +382,6 @@ static int __init simrupt_init(void)
     /* Create the workqueue */
     simrupt_workqueue = alloc_workqueue("simruptd", WQ_UNBOUND, WQ_MAX_ACTIVE);
     if (!simrupt_workqueue) {
-        vfree(fast_buf.buf);
         ret = -ENOMEM;
         goto error_workqueue;
     }
